@@ -1,9 +1,9 @@
 import pylab
 import csv
-#dataset 1
+#dataset 2
 
 myData = []
-with open('data_1.csv', newline='') as test:
+with open('data_2.csv', newline='') as test:
     reader = csv.reader(test)
     print(reader)
     for row in reader:
