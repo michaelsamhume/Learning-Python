@@ -23,6 +23,9 @@ for volts in range(40):
         print(f'Current is {current} for voltage {volts}')
        # foo = input('<Enter> to continue.')
 print(curList)
+pylab.title('Output from Keithley 2450 SourceMeter')
+pylab.xlabel('Voltage')
+pylab.ylabel('Current')
 pylab.plot(curList)
 pylab.show()
 
@@ -36,5 +39,5 @@ pylab.show()
 # with keithley.output_enabled.set_to(True):
 #     voltage = keithley.sense.voltage()
 #     me = input('foio')
-# print(f"Approx. resistance: ", voltage / current_setpoint)
+# print(f"Approx. resistance: ", voltage // current_setpoint)
 
