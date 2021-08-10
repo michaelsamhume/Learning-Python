@@ -12,17 +12,21 @@ keithley.terminals("front")
 
 keithley.source.function("voltage")
 current = keithley.sense.function("current")
-curList=[]
+curList = []
+voltList = []
 volts=0
-for volts in range(40):
+for x in range(40):
     volts += 0.05
     with keithley.output_enabled.set_to(True):
         keithley.source.voltage(volts)
         current = keithley.sense.current()
         curList.append(current)
+        voltList.append(volts)
         print(f'Current is {current} for voltage {volts}')
-       # foo = input('<Enter> to continue.')
+        print(f"Approx. resistance: ", volts // current)
+
 print(curList)
+print(voltList)
 pylab.title('Output from Keithley 2450 SourceMeter')
 pylab.xlabel('Voltage')
 pylab.ylabel('Current')
