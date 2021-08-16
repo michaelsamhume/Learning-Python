@@ -18,13 +18,24 @@ class MainFrame(wx.Frame):
         self.ctrl_menu = wx.Panel(self.split_win)
         self.split_win.SplitVertically(self.ctrl_menu, self.graph_panel, 200)
 
-        #Define menu fields for voltage control.
-        self.lvText = wx.StaticText(self.ctrl_menu, -1, 'Min Voltage (V)', size=(100,20), pos=(10,10))
-        self.low_voltage = wx.TextCtrl(self.ctrl_menu, -1, 'Vlow', size=(80,20), pos=(10,30))
-        #There need to be 3 of these: Vmin, Vmax, Vstep.
+        # Define menu fields for voltage control.
+        self.lvText = wx.StaticText(self.ctrl_menu, -1, 'Min Voltage (V)', size=(100 , 20), pos=(10 , 50))
+        self.lvText = wx.StaticText(self.ctrl_menu, -1, 'Max Voltage (V)', size=(100, 20), pos=(10, 90))
+        self.lvText = wx.StaticText(self.ctrl_menu, -1, 'Step Voltage (V)', size=(100, 20), pos=(10,130))
+        self.min_voltage = wx.TextCtrl(self.ctrl_menu, -1, 'Vmin', size=(80 , 20), pos=(10 , 30))
+        self.max_voltage = wx.TextCtrl(self.ctrl_menu, -1, 'Vmax', size=(80, 20), pos=(10, 70))
+        self.step_voltage = wx.TextCtrl(self.ctrl_menu, -1, 'Vstep', size=(80, 20), pos=(10, 110))
+        # There need to be 3 of these: Vmin, Vmax, Vstep
 
-        #Select channel to tune.
-        self.chText = wx.StaticText(self.ctrl_menu, -1, 'Tune Channel:', size = (100,20), pos = (10,200))
+        if self.max_voltage != [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9, 3.0, 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9, 4.0, 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9, 5]:
+                print("Please input a number between 0 and 5 for the maximum voltage")
+        if self.min_voltage != [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9, 3.0, 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9, 4.0, 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9, 5]:
+                print("Please input a number between 0 and 5 for the minimum voltage")
+        if self.step_voltage != type(float):
+            print("Please input a number with type float in Step voltage if necessary")
+
+        # Select channel to tune.
+        self.chText = wx.StaticText(self.ctrl_menu, -1, 'Tune Channel:', size=(100 , 20), pos=(10 , 200))
         self.chBox = wx.ComboBox(self.ctrl_menu,  choices =['1','2','3','4','5','6','7','8','Common'], size = (100,20), pos=(10,220))
 
         #Where do I save my data?
@@ -52,7 +63,9 @@ class MainFrame(wx.Frame):
         self.canvas = FigureCanvas(self.graph_panel, -1, self.fig)
 
         print(f'Currently selected options are: \n'
-              f'Voltage: {self.low_voltage.GetValue()}\n'
+              f'Minimum Voltage: {self.min_voltage.GetValue()}\n'
+              f'Maximum Voltage: {self.max_voltage.GetValue()}\n'
+              f'Step Voltage: {self.step_voltage.GetValue()}\n'
               f'Channel: {self.chBox.GetStringSelection()}')
 
     def set_path(self, event):
