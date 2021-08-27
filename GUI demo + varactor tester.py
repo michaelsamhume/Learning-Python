@@ -1,7 +1,18 @@
 import wx
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
+import time
+import os
+import matplotlib.pyplot as plt
+import qcodes as qc
+import pandas as pd
 from numpy import random
+import numpy as np
+from qcodes.dataset.experiment_container import new_experiment, load_experiment_by_name
+from qcodes.dataset.measurements import Measurement
+from qcodes.instrument_drivers.yokogawa import GS200
+import qcodes.instrument_drivers.Keysight.N5245A as N5245A
+
 
 
 class MainFrame(wx.Frame):
@@ -22,9 +33,9 @@ class MainFrame(wx.Frame):
         self.lvText = wx.StaticText(self.ctrl_menu, -1, 'Min Voltage (V)', size=(100 , 20), pos=(10 , 50))
         self.lvText = wx.StaticText(self.ctrl_menu, -1, 'Max Voltage (V)', size=(100, 20), pos=(10, 90))
         self.lvText = wx.StaticText(self.ctrl_menu, -1, 'Step Voltage (V)', size=(100, 20), pos=(10,130))
-        self.min_voltage = wx.TextCtrl(self.ctrl_menu, -1, 'Vmin', size=(80 , 20), pos=(10 , 30))
-        self.max_voltage = wx.TextCtrl(self.ctrl_menu, -1, 'Vmax', size=(80, 20), pos=(10, 70))
-        self.step_voltage = wx.TextCtrl(self.ctrl_menu, -1, 'Vstep', size=(80, 20), pos=(10, 110))
+        self.min_voltage = wx.TextCtrl(self.ctrl_menu, -1, '0', size=(80 , 20), pos=(10 , 30))
+        self.max_voltage = wx.TextCtrl(self.ctrl_menu, -1, '3', size=(80, 20), pos=(10, 70))
+        self.step_voltage = wx.TextCtrl(self.ctrl_menu, -1, '1', size=(80, 20), pos=(10, 110))
         # There need to be 3 of these: Vmin, Vmax, Vstep
 
         # Select channel to tune.
@@ -71,19 +82,96 @@ class MainFrame(wx.Frame):
             print('Max volt is out of range [0,5]')
             return
 
+        exp_name = 'PNA_Test2'
+        sample_name = 'data'
+        indPlot = False
 
+        pPower = -20
+        pStart = 160e6
+        pStop = 380e6
+        pPoints = 5000
+
+
+        Voltrange = np.arange(minVolt, maxVolt, stepVolt)
+
+        try:
+            exp = load_experiment_by_name(exp_name, sample=sample_name)
+            print('Experiment loaded. Last ID no:', exp.last_counter)
+        except ValueError:
+            exp = new_experiment(exp_name, sample_name)
+            print('Starting new experiment.')
+
+        pna = N5245A.N5245A('PNA', 'GPIB0::16::INSTR')
+        dc = GS200.GS200('dc', 'GPIB0::1::INSTR')
+        dc.voltage_range(10)
+
+        os.mkdir(os.path.join(self.save_path, sample_name))
+
+        #plt.ion()
+        #f, ax = plt.subplots(1, 1, figsize=(9, 6))
+        #ax.set(xlabel='Frequency (Hz)', ylabel='Intensity (dB)', title=f'Data for {sample_name}')
+        mFigname = os.path.join(self.save_path, sample_name, sample_name + '.png')
 
         self.fig = Figure()
-
         self.ax1 = self.fig.add_subplot(111)
-        self.ax1.scatter(random.rand(20), random.rand(20), 30)
-
-        self.ax1.set_title("Data")
-        self.ax1.set_xlim([0,1])
-        self.ax1.set_ylim([0,1])
+        self.ax1.set_title("Random Data")
+        #self.ax1.set_xlim([0,1])
+        #self.ax1.set_ylim([0,1])
         self.ax1.set_xlabel('Frequency (Hz)')
         self.ax1.set_ylabel('S11 (dB)')
         self.canvas = FigureCanvas(self.graph_panel, -1, self.fig)
+
+        for vltg in Voltrange:
+            Vstr = str(vltg)
+            fname = os.path.join(self.save_path, sample_name, sample_name + '_voltage_' + Vstr + '.csv')
+            figname = os.path.join(self.save_path, sample_name,
+                                   sample_name + '_voltage_' + Vstr + '.png')
+            dc.voltage.set(vltg)
+            dc.output('on')
+
+            pna.power(pPower)
+            pna.start(pStart)
+            pna.stop(pStop)
+            pna.points(pPoints)
+            pna.trace("S11")
+
+            # Enable 2 averages, and set IF BW to 1kHz
+            pna.if_bandwidth(1e3)
+            pna.averages_enabled(True)
+            pna.averages(1)
+
+            # Run a measurement
+            meas = Measurement()
+            meas.register_parameter(pna.magnitude)
+
+            with meas.run() as datasaver:
+                mag = pna.magnitude()
+                datasaver.add_result((pna.magnitude, mag))
+                dataid = datasaver.run_id
+                dataset = datasaver.dataset
+
+            plotMe = dataset.to_pandas_dataframe()
+            self.ax1.plot(plotMe)
+
+            # ax.plot(plotMe, label=f"{Vstr}V")
+            # ax.legend()
+            # plt.pause(0.2)
+            # plt.show()
+            # plt.savefig(mFigname)
+            #
+            # if indPlot:
+            #     plt.plot(plotMe)
+            #     plt.xlabel('Frequency (Hz)')
+            #     plt.ylabel('Intensity (dB)')
+            #     plt.title(f'S11 for {sample_name} {Vstr}V')
+            #     plt.show(block=False)
+            #     plt.savefig(figname)
+            #     plt.pause(0.5)
+            #     plt.close()
+
+            plotMe.to_csv(fname)
+
+        dc.output('off')
 
         print(f'Currently selected options are: \n'
               f'Minimum Voltage: {self.min_voltage.GetValue()}\n'
@@ -98,7 +186,6 @@ class MainFrame(wx.Frame):
         if fdlg.ShowModal() == wx.ID_OK:
             self.save_path = fdlg.GetPath() + ".csv"
             self.file_path.SetValue(self.save_path)
-
 
 
 
